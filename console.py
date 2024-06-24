@@ -261,10 +261,17 @@ class HBNBCommand(cmd.Cmd):
         Useage: <class name>.count()
         """
         count = 0
-        for k, v in storage._FileStorage__objects.items():
-            if args == k.split('.')[0]:
-                count += 1
-        print(count)
+        if args:
+            args = args.split(' ')[0]  # remove possible trailing args
+            if args not in HBNBCommand.classes:
+                print("** class doesn't exist **")
+                return
+            for k, v in storage._FileStorage__objects.items():
+                if args == k.split('.')[0]:
+                    count += 1
+            print(count)
+        else:
+            print("** class name missing **")
 
     def help_count(self):
         """ """
