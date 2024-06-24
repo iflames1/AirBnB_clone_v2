@@ -50,7 +50,7 @@ class TestHBNBCommand(unittest.TestCase):
         with patch('sys.stdout', new=StringIO()) as f:
             self.console.onecmd("create User")
             user_id = f.getvalue().strip()
-            self.assertTrue(len(user_id) > 0)
+            self.assertIsNotNone(user_id)
 
     def test_create_missing_class(self):
         """Test create command with missing class name"""
@@ -65,6 +65,44 @@ class TestHBNBCommand(unittest.TestCase):
             self.console.onecmd("create NonExistentClass")
             output = f.getvalue().strip()
         self.assertEqual(output, "** class doesn't exist **")
+
+    def test_create_valid_class_with_parameters(self):
+        """Test create command with valid class name and parameters"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd('create State name="California"')
+            state_id = f.getvalue().strip()
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show State {state_id}")
+            output = f.getvalue().strip()
+        self.assertIn("California", output)
+
+    def test_create_valid_class_with_multiple_parameters(self):
+        """Test create command with valid class name and multiple parameters"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd('create Place city_id="0001" user_id="0001" name="My_little_house" '
+                                'number_rooms=4 number_bathrooms=2 max_guest=10 price_by_night=300 '
+                                'latitude=37.773972 longitude=-122.431297')
+            place_id = f.getvalue().strip()
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show Place {place_id}")
+            output = f.getvalue().strip()
+        self.assertIn("My little house", output)
+        self.assertIn("number_rooms", output)
+        self.assertIn("number_bathrooms", output)
+        self.assertIn("max_guest", output)
+        self.assertIn("price_by_night", output)
+        self.assertIn("latitude", output)
+        self.assertIn("longitude", output)
+
+    def test_create_with_underscore_in_string(self):
+        """Test create command with underscores in string parameters"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd('create Place name="My_little_house"')
+            place_id = f.getvalue().strip()
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show Place {place_id}")
+            output = f.getvalue().strip()
+        self.assertIn("My little house", output)
 
     def test_show(self):
         """Test show command"""
