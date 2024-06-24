@@ -14,10 +14,30 @@ class TestFileStorage(unittest.TestCase):
         self.storage = FileStorage()
         self.file_path = self.storage._FileStorage__file_path
         self.objects = self.storage._FileStorage__objects
+        self.obj = BaseModel()
+        self.obj.save()
 
     def tearDown(self) -> None:
         if os.path.exists(self.file_path):
             os.remove(self.file_path)
+
+    def test_all_returns_all_objects(self):
+        """Test that all() returns all objects in storage"""
+        all_objects = self.storage.all()
+        self.assertIn(f'BaseModel.{self.obj.id}', all_objects)
+        self.assertEqual(all_objects[f'BaseModel.{self.obj.id}'], self.obj)
+
+    def test_all_with_class_filter(self):
+        """Test that all(cls) returns objects of type cls only"""
+        new_obj = BaseModel()
+        new_obj.save()
+        all_objects = self.storage.all(BaseModel)
+        self.assertIn(f'BaseModel.{new_obj.id}', all_objects)
+        new_obj_2 = BaseModel()
+        new_obj_2.save()
+        new_all_object = self.storage.all(BaseModel)
+        self.assertIn(f'BaseModel.{self.obj.id}', all_objects)
+        self.assertEqual(len(all_objects), len(new_all_object) - 1)
 
     def test_all_method(self):
         obj1 = BaseModel()
