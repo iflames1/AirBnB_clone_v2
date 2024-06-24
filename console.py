@@ -114,7 +114,10 @@ class HBNBCommand(cmd.Cmd):
         pass
 
     def do_create(self, args):
-        """ Create an object of any class"""
+        """
+        Create an object of any class
+        Usage: create <class name>
+        """
         if not args:
             print("** class name missing **")
             return
@@ -132,7 +135,11 @@ class HBNBCommand(cmd.Cmd):
         print("[Usage]: create <className>\n")
 
     def do_show(self, args):
-        """ Method to show an individual object """
+        """
+        Method to show an individual object
+        Usage: show <class name> <id>
+            <class name>.show(<id>)
+        """
         new = args.partition(" ")
         c_name = new[0]
         c_id = new[2]
@@ -165,7 +172,11 @@ class HBNBCommand(cmd.Cmd):
         print("[Usage]: show <className> <objectId>\n")
 
     def do_destroy(self, args):
-        """ Destroys a specified object """
+        """
+        Destroys a specified object
+        Usage: destroy <class name> <id>
+            <class name>.destroy(<id>)
+        """
         new = args.partition(" ")
         c_name = new[0]
         c_id = new[2]
@@ -198,7 +209,11 @@ class HBNBCommand(cmd.Cmd):
         print("[Usage]: destroy <className> <objectId>\n")
 
     def do_all(self, args):
-        """ Shows all objects, or all objects of a class"""
+        """
+        Shows all objects, or all objects of a class
+        Usage: all (optional: <class name>)
+            <class name>.all()
+        """
         print_list = []
 
         if args:
@@ -221,7 +236,10 @@ class HBNBCommand(cmd.Cmd):
         print("[Usage]: all <className>\n")
 
     def do_count(self, args):
-        """Count current number of class instances"""
+        """
+        Count current number of class instances
+        Useage: <class name>.count()
+        """
         count = 0
         for k, v in storage._FileStorage__objects.items():
             if args == k.split('.')[0]:
@@ -233,7 +251,12 @@ class HBNBCommand(cmd.Cmd):
         print("Usage: count <class_name>")
 
     def do_update(self, args):
-        """ Updates a certain object with new info """
+        """
+        Updates a certain object with new info
+        Usage: update <class name> <id> <attribute name> "<attribute value>"
+        <class name>.update("<id>", "<attribute name>", "<attribute value>")
+        <class name>.update("<id>", <dictionary representation>)
+        """
         c_name = c_id = att_name = att_val = kwargs = ''
 
         # isolate cls from id/args, ex: (<cls>, delim, <id/args>)
