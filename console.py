@@ -272,7 +272,6 @@ class HBNBCommand(cmd.Cmd):
         """
         c_name = c_id = att_name = att_val = kwargs = ''
 
-
         # isolate cls from id/args, ex: (<cls>, delim, <id/args>)
         args = args.partition(" ")
         if args[0]:
