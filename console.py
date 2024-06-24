@@ -118,14 +118,26 @@ class HBNBCommand(cmd.Cmd):
         Create an object of any class
         Usage: create <class name>
         """
-        print(args)
+
         if not args:
             print("** class name missing **")
             return
-        elif args not in HBNBCommand.classes:
+        args = args.split()
+        if args[0] not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        new_instance = HBNBCommand.classes[args]()
+
+        model_class = args[0]
+
+        kwargs = {}
+        for arg in args[1:]:
+            key_value = arg.split('=')
+            if len(key_value) > 1:
+                key = key_value[0]
+                value = ''.join(key_value[1:])
+                kwargs[key] = value.strip('"')
+
+        new_instance = HBNBCommand.classes[model_class](**kwargs)
         storage.save()
         print(new_instance.id)
         storage.save()
@@ -259,6 +271,7 @@ class HBNBCommand(cmd.Cmd):
         <class name>.update("<id>", <dictionary representation>)
         """
         c_name = c_id = att_name = att_val = kwargs = ''
+
 
         # isolate cls from id/args, ex: (<cls>, delim, <id/args>)
         args = args.partition(" ")
