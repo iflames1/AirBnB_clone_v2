@@ -135,13 +135,8 @@ class HBNBCommand(cmd.Cmd):
             if len(key_value) > 1:
                 key = key_value[0]
                 value = ''.join(key_value[1:]).strip('"')
-                if value.isdigit():
-                    value = int(value)
-                else:
-                    try:
-                        value = float(value)
-                    except ValueError:
-                        value = value.replace('_', ' ')
+                if key in HBNBCommand.types:
+                    value = HBNBCommand.types[key](value)
                 kwargs[key] = value
 
         new_instance = HBNBCommand.classes[model_class](**kwargs)
@@ -260,8 +255,8 @@ class HBNBCommand(cmd.Cmd):
         Count current number of class instances
         Useage: <class name>.count()
         """
-        count = 0
         if args:
+            count = 0
             args = args.split(' ')[0]  # remove possible trailing args
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
