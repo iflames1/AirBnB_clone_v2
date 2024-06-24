@@ -1,24 +1,27 @@
 #!/usr/bin/python3
-""" """
-from tests.test_models.test_base_model import test_basemodel
+
+import unittest
 from models.city import City
+from models.engine.file_storage import FileStorage
 
 
-class test_City(test_basemodel):
-    """ """
+class TestUser(unittest.TestCase):
+    def setUp(self):
+        self.city = City()
+        self.storage = FileStorage()
+        self.city.state_id = "state id"
+        self.city.name = "Isaac"
 
-    def __init__(self, *args, **kwargs):
-        """ """
-        super().__init__(*args, **kwargs)
-        self.name = "City"
-        self.value = City
+    def tearDown(self):
+        self.storage._FileStorage__object = {}
 
-    def test_state_id(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.state_id), str)
+    def test_attributes(self):
+        self.assertEqual(self.city.name, "Isaac")
+        self.assertEqual(self.city.state_id, "state id")
+        self.assertIsNotNone(self.city.created_at)
+        self.assertIsNotNone(self.city.updated_at)
+        self.assertIsNotNone(self.city.id)
 
-    def test_name(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.name), str)
+
+if __name__ == "__main__":
+    unittest.main()

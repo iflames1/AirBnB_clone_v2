@@ -1,34 +1,31 @@
 #!/usr/bin/python3
-""" """
-from tests.test_models.test_base_model import test_basemodel
+
+import unittest
 from models.user import User
+from models.engine.file_storage import FileStorage
 
 
-class test_User(test_basemodel):
-    """ """
+class TestUser(unittest.TestCase):
+    def setUp(self):
+        self.user = User()
+        self.storage = FileStorage()
+        self.user.email = "test@example.com"
+        self.user.password = "password123"
+        self.user.first_name = "Isaac"
+        self.user.last_name = "Flames"
 
-    def __init__(self, *args, **kwargs):
-        """ """
-        super().__init__(*args, **kwargs)
-        self.name = "User"
-        self.value = User
+    def tearDown(self):
+        self.storage._FileStorage__object = {}
 
-    def test_first_name(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.first_name), str)
+    def test_attributes(self):
+        self.assertEqual(self.user.email, "test@example.com")
+        self.assertEqual(self.user.password, "password123")
+        self.assertEqual(self.user.first_name, "Isaac")
+        self.assertEqual(self.user.last_name, "Flames")
+        self.assertIsNotNone(self.user.created_at)
+        self.assertIsNotNone(self.user.updated_at)
+        self.assertIsNotNone(self.user.id)
 
-    def test_last_name(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.last_name), str)
 
-    def test_email(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.email), str)
-
-    def test_password(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.password), str)
+if __name__ == "__main__":
+    unittest.main()

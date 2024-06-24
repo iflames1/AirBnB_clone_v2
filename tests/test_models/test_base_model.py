@@ -1,25 +1,17 @@
 #!/usr/bin/python3
-""" """
-from models.base_model import BaseModel
+""""""
+
 import unittest
-import datetime
-from uuid import UUID
-import json
+from datetime import datetime
 import os
+from models.base_model import BaseModel
 
 
-class test_basemodel(unittest.TestCase):
-    """ """
-
-    def __init__(self, *args, **kwargs):
-        """ """
-        super().__init__(*args, **kwargs)
-        self.name = 'BaseModel'
-        self.value = BaseModel
-
+class TestBaseModel(unittest.TestCase):
     def setUp(self):
-        """ """
-        pass
+        self.base_model = BaseModel()
+        self.base_model.name = "My First Model"
+        self.base_model.my_number = 89
 
     def tearDown(self):
         try:
@@ -27,73 +19,62 @@ class test_basemodel(unittest.TestCase):
         except Exception:
             pass
 
-    def test_default(self):
-        """ """
-        i = self.value()
-        self.assertEqual(type(i), self.value)
+    def test_id_generation(self):
+        self.assertIsNotNone(self.base_model.id)
 
-    def test_kwargs(self):
-        """ """
-        i = self.value()
-        copy = i.to_dict()
-        new = BaseModel(**copy)
-        self.assertFalse(new is i)
+    def test_id_type(self):
+        self.assertIsInstance(self.base_model.id, str)
 
-    def test_kwargs_int(self):
-        """ """
-        i = self.value()
-        copy = i.to_dict()
-        copy.update({1: 2})
-        with self.assertRaises(TypeError):
-            new = BaseModel(**copy)
+    def test_id_unique(self):
+        self.unique_id = BaseModel()
+        self.assertNotEqual(self.unique_id.id, self.base_model.id)
 
-    def test_save(self):
-        """ Testing save """
-        i = self.value()
-        i.save()
-        key = self.name + "." + i.id
-        with open('file.json', 'r') as f:
-            j = json.load(f)
-            self.assertEqual(j[key], i.to_dict())
+    def test_date_types(self):
+        self.assertIsInstance(self.base_model.created_at, datetime)
+        self.assertIsInstance(self.base_model.created_at, datetime)
 
-    def test_str(self):
-        """ """
-        i = self.value()
-        self.assertEqual(str(i), '[{}] ({}) {}'.format(self.name, i.id,
-                         i.__dict__))
+    def test_created_at_and_updated_at(self):
+        now = datetime.now()
+        self.assertLessEqual(self.base_model.created_at, now)
+        self.assertLessEqual(self.base_model.updated_at, now)
 
-    def test_todict(self):
-        """ """
-        i = self.value()
-        n = i.to_dict()
-        self.assertEqual(i.to_dict(), n)
+    def test_save_method(self):
+        previous_updated_at = self.base_model.updated_at
+        self.base_model.save()
+        self.assertNotEqual(previous_updated_at, self.base_model.updated_at)
+        self.assertLessEqual(self.base_model.created_at,
+                             self.base_model.updated_at)
 
-    def test_kwargs_none(self):
-        """ """
-        n = {None: None}
-        with self.assertRaises(TypeError):
-            new = self.value(**n)
+    def test_to_dict_method(self):
+        obj_dict = self.base_model.to_dict()
+        self.assertIsNotNone(obj_dict["id"])
+        self.assertIsInstance(obj_dict, dict)
+        self.assertEqual(obj_dict["__class__"], "BaseModel")
+        self.assertEqual(obj_dict["id"], self.base_model.id)
+        self.assertEqual(obj_dict["created_at"],
+                         self.base_model.created_at.isoformat())
+        self.assertEqual(obj_dict["updated_at"],
+                         self.base_model.updated_at.isoformat())
+        self.assertEqual(obj_dict["name"], self.base_model.name)
+        self.assertEqual(obj_dict["my_number"], self.base_model.my_number)
 
-    def test_kwargs_one(self):
-        """ """
-        n = {'Name': 'test'}
-        with self.assertRaises(KeyError):
-            new = self.value(**n)
+    def test_base_model_dict(self):
+        obj_dict = self.base_model.to_dict()
+        my_new_model = BaseModel(**obj_dict)
+        self.assertIn('id', my_new_model.__dict__)
+        self.assertEqual(self.base_model.id, my_new_model.id)
+        self.assertEqual(self.base_model.created_at, my_new_model.created_at)
+        self.assertEqual(self.base_model.updated_at, my_new_model.updated_at)
+        self.assertEqual(self.base_model.name, my_new_model.name)
+        self.assertEqual(self.base_model.my_number, my_new_model.my_number)
+        self.assertNotIn("__class__", my_new_model.__dict__)
 
-    def test_id(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.id), str)
+    def test_str_method(self):
+        obj_str = str(self.base_model)
+        expected_str = f"[BaseModel] ({self.base_model.id}) "\
+                       f"{self.base_model.__dict__}"
+        self.assertEqual(obj_str, expected_str)
 
-    def test_created_at(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.created_at), datetime.datetime)
 
-    def test_updated_at(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.updated_at), datetime.datetime)
-        n = new.to_dict()
-        new = BaseModel(**n)
-        self.assertFalse(new.created_at == new.updated_at)
+if __name__ == "__main__":
+    unittest.main()

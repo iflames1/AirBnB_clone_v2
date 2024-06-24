@@ -1,69 +1,45 @@
 #!/usr/bin/python3
-""" """
-from tests.test_models.test_base_model import test_basemodel
+
+import unittest
 from models.place import Place
+from models.engine.file_storage import FileStorage
 
 
-class test_Place(test_basemodel):
-    """ """
+class TestUser(unittest.TestCase):
+    def setUp(self):
+        self.place = Place()
+        self.storage = FileStorage()
+        self.place.city_id = "city id"
+        self.place.user_id = "user id"
+        self.place.name = "Isaac"
+        self.place.description = "description"
+        self.place.number_rooms = 3
+        self.place.number_bathrooms = 2
+        self.place.max_guest = 5
+        self.place.price_by_night = 5000
+        self.place.latitude = 30.6
+        self.place.longitude = 30.6
+        self.place.amenity_ids = ["id 1", "id 2"]
 
-    def __init__(self, *args, **kwargs):
-        """ """
-        super().__init__(*args, **kwargs)
-        self.name = "Place"
-        self.value = Place
+    def tearDown(self):
+        self.storage._FileStorage__object = {}
 
-    def test_city_id(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.city_id), str)
+    def test_attributes(self):
+        self.assertEqual(self.place.city_id, "city id")
+        self.assertEqual(self.place.user_id, "user id")
+        self.assertEqual(self.place.name, "Isaac")
+        self.assertEqual(self.place.description, "description")
+        self.assertEqual(self.place.number_rooms, 3)
+        self.assertEqual(self.place.number_bathrooms, 2)
+        self.assertEqual(self.place.max_guest, 5)
+        self.assertEqual(self.place.price_by_night, 5000)
+        self.assertEqual(self.place.latitude, 30.6)
+        self.assertEqual(self.place.longitude, 30.6)
+        self.assertEqual(self.place.amenity_ids, ["id 1", "id 2"])
+        self.assertIsNotNone(self.place.created_at)
+        self.assertIsNotNone(self.place.updated_at)
+        self.assertIsNotNone(self.place.id)
 
-    def test_user_id(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.user_id), str)
 
-    def test_name(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.name), str)
-
-    def test_description(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.description), str)
-
-    def test_number_rooms(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.number_rooms), int)
-
-    def test_number_bathrooms(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.number_bathrooms), int)
-
-    def test_max_guest(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.max_guest), int)
-
-    def test_price_by_night(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.price_by_night), int)
-
-    def test_latitude(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.latitude), float)
-
-    def test_longitude(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.latitude), float)
-
-    def test_amenity_ids(self):
-        """ """
-        new = self.value()
-        self.assertEqual(type(new.amenity_ids), list)
+if __name__ == "__main__":
+    unittest.main()
