@@ -39,6 +39,29 @@ class TestFileStorage(unittest.TestCase):
         self.assertIn(f'BaseModel.{self.obj.id}', all_objects)
         self.assertEqual(len(all_objects), len(new_all_object) - 1)
 
+    def test_delete_existing_object(self):
+        """Test that delete(obj) deletes obj from storage"""
+        self.storage.delete(self.obj)
+        all_objects_after_deletion = self.storage.all()
+        self.assertNotIn(f'BaseModel.{self.obj.id}', all_objects_after_deletion)
+
+    def test_delete_existing_object2(self):
+        """Test that delete(obj) deletes obj from storage"""
+        obj2 = BaseModel()
+        self.storage.new(obj2)
+        self.storage.save()
+
+        initial_length = len(self.storage.all())
+        self.storage.delete(obj2)
+        new_length = len(self.storage.all())
+        self.assertEqual(new_length, initial_length - 1)
+
+    def test_delete_none_object(self):
+        """Test that delete(None) does nothing"""
+        self.storage.delete(None)
+        all_objects = self.storage.all()
+        self.assertIn(f'BaseModel.{self.obj.id}', all_objects)
+
     def test_all_method(self):
         obj1 = BaseModel()
         obj2 = BaseModel()
