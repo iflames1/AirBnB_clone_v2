@@ -1,376 +1,440 @@
 #!/usr/bin/python3
-"""
-The `HBNBCommand` class is the main entry point for the command-line interface
-(CLI) of the AirBnB clone project. It inherits from the `cmd.Cmd` class, which
-provides a basic framework for building interactive command-line applications.
 
-The class defines several methods that handle various commands that can be
-executed from the CLI, such as `do_all`, `do_create`, `do_show`, `do_destroy`,
-and `do_update`. These methods interact with the storage system to perform
-CRUD (Create, Read, Update, Delete) operations on the different classes of
-the AirBnB clone project.
-
-The `default` method is used to handle any unrecognized commands, and it
-attempts to match the command to a specific class and method using a regular
-expression. If a match is found, the corresponding method is called with the
-provided arguments.
-
-The `do_count` method is used to count the number of instances of a specific
-class that are stored in the storage system.
-
-The `do_quit` and `do_EOF` methods are used to exit the CLI application.
-"""
-
-import cmd
-import re
-import shlex
-from datetime import datetime
-from models.base_model import BaseModel
+import unittest
+from unittest.mock import patch
+from io import StringIO
+from console import HBNBCommand
 from models import storage
+from models.base_model import BaseModel
 from models.user import User
-from models.place import Place
-from models.state import State
-from models.city import City
-from models.amenity import Amenity
-from models.review import Review
 
 
-class HBNBCommand(cmd.Cmd):
-    """
-    HBNB Console entry
-    """
-    prompt = "(hbnb) "
-    CLASSES = {
-        "BaseModel": BaseModel,
-        "User": User,
-        "Place": Place,
-        "State": State,
-        "City": City,
-        "Amenity": Amenity,
-        "Review": Review
-    }
+class TestHBNBCommand(unittest.TestCase):
+    """Unit tests for the HBNBCommand class"""
 
-    def default(self, line: str) -> None:
-        """
-        The `default` method is used to handle any unrecognized commands, and
-        it attempts to match the command to a specific class and method using
-        a regular expression. If a match is found, the corresponding method is
-        called with the provided arguments.
+    def setUp(self):
+        """Set up for the tests"""
+        self.console = HBNBCommand()
 
-        Parameters:
-            line (str): The command line input.
+    def tearDown(self):
+        """Tear down for the tests"""
+        storage.reload()
 
-        Returns:
-            None
-        """
-        method_mapping = {
-            "all": self.do_all,
-            "count": self.do_count,
-            "show": self.do_show,
-            "destroy": self.do_destroy,
-            "update": self.do_update,
-            "create": self.do_create
-        }
-        match = re.match(r"(\w+)\.(\w+)\((.*)\)", line)
-        if match:
-            class_name, method_name, args = match.groups()
-            if class_name in self.CLASSES and method_name in method_mapping:
-                method = method_mapping[method_name]
-                method(f"{class_name} {args}".strip())
-            else:
-                print("** class doesn't exist **" if class_name not in
-                      self.CLASSES else "*** Unknown syntax **")
-        else:
-            print("*** Unknown syntax:", line)
+    def test_help(self):
+        """Test the help command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("help")
+            output = f.getvalue()
+        self.assertIsNotNone(output)
 
-    def do_count(self, arg):
-        """
-        Counts the number of instances of a specific class that are stored in
-        the storage system.
-        Usage: count <class name>
-            <class name>.count()
+    def test_all(self):
+        """Test all command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
 
-        Parameters:
-            arg (str): The name of the class to count the instances of.
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("all User")
+            output = f.getvalue().strip()
+        self.assertIn(user_id, output)
 
-        Returns:
-            None
-        """
-        if not arg:
-            print("** class name missing **")
-            return
-        class_name = arg.split()[0]
-        if class_name in self.CLASSES:
-            count = sum(1 for key in storage.all().keys()
-                        if key.startswith(class_name + "."))
-            print(count)
-        else:
-            print("** class doesn't exist **")
+    def test_all_v2(self):
+        """Test all command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
 
-    def do_all(self, arg):
-        """
-        Retrieves all instances of a specific class from the storage system
-        and prints them as a list.
-        Usage: all (optional: <class name>)
-            <class name>.all()
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("User.all()")
+            output = f.getvalue().strip()
+        self.assertIn(user_id, output)
 
-        Parameters:
-            arg (str): The name of the class to retrieve instances of. If not
-            provided, retrieves all instances from the storage system.
+    def test_all_invalid_class(self):
+        """Test all command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("all NonExistentClass")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
 
-        Returns:
-            None
+    def test_all_invalid_class_v2(self):
+        """Test all command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("NonExistentClass.all()")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
 
-        Raises:
-            None
-        """
-        obj_list = []
-        if arg:
-            class_name = arg.split()[0]
-            if class_name not in self.CLASSES:
-                print("** class doesn't exist **")
-                return
-            obj_dict = storage.all()
-            for key, value in obj_dict.items():
-                if class_name == key.split('.')[0]:
-                    obj_list.append(str(value))
-        else:
-            obj_dict = storage.all()
-            for value in obj_dict.values():
-                obj_list.append(str(value))
-        print(obj_list)
+    def test_create(self):
+        """Test create command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
+            self.assertTrue(len(user_id) > 0)
 
-    def do_create(self, arg):
-        """
-        Creates a new instance of a class and saves it to the storage system.
-        Usage: create <class name>
+    def test_create_missing_class(self):
+        """Test create command with missing class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class name missing **")
 
-        Parameters:
-            arg (str): The name of the class to create an instance of.
+    def test_create_invalid_class(self):
+        """Test create command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create NonExistentClass")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
 
-        Returns:
-            None
+    def test_show(self):
+        """Test show command"""
+        # Create a User instance first
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
 
-        Raises:
-            None
-        """
-        if not arg:
-            print("** class name missing **")
-            return
-        class_name = arg.split()[0]
-        if class_name in self.CLASSES:
-            new_instance = self.CLASSES[class_name]()
-            new_instance.save()
-            print(new_instance.id)
-        else:
-            print("** class doesn't exist **")
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show User {user_id}")
+            output = f.getvalue().strip()
+        self.assertIn(user_id, output)
 
-    def do_show(self, arg):
-        """
-        Displays the details of an instance of a class.
-        Usage: show <class name> <id>
-        Parameters:
-            arg (str): The name of the class followed by the instance ID
-            separated by a space.
+    def test_show_v2(self):
+        """Test show command"""
+        # Create a User instance first
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
 
-        Returns:
-            None
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"User.show({user_id})")
+            output = f.getvalue().strip()
+        self.assertIn(user_id, output)
 
-        Raises:
-            None
-        """
-        if not arg:
-            print("** class name missing **")
-            return
-        args = arg.split()
-        class_name = args[0]
-        if class_name not in self.CLASSES:
-            print("** class doesn't exist **")
-            return
-        if len(args) < 2:
-            print("** instance id missing **")
-            return
-        key = class_name + '.' + args[1].strip('"\'')
-        obj_dict = storage.all()
-        if key in obj_dict:
-            print(obj_dict[key])
-        else:
-            print("** no instance found **")
+    def test_show_missing_class(self):
+        """Test show command with missing class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("show")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class name missing **")
 
-    def do_destroy(self, arg):
-        """
-        Deletes an instance of a class from storage.
-        Usage: destroy <class name> <id>
+    def test_show_missing_id(self):
+        """Test show command with missing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("show User")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** instance id missing **")
 
-        Parameters:
-            arg (str): The name of the class followed by the instance ID
-            separated by a space.
+    def test_show_missing_id_v2(self):
+        """Test show command with missing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("User.show()")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** instance id missing **")
 
-        Returns:
-            None
+    def test_show_invalid_class(self):
+        """Test show command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("show NonExistentClass 1234")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
 
-        Raises:
-            None
-        """
-        if not arg:
-            print("** class name missing **")
-            return
-        args = arg.split()
-        class_name = args[0]
-        if class_name not in self.CLASSES:
-            print("** class doesn't exist **")
-            return
-        if len(args) < 2:
-            print("** instance id missing **")
-            return
-        key = class_name + '.' + args[1].strip('"\'')
-        obj_dict = storage.all()
-        if key not in obj_dict:
-            print("** no instance found **")
-            return
-        del obj_dict[key]
-        storage.save()
+    def test_show_invalid_class_v2(self):
+        """Test show command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("NonExistentClass.show(1234)")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
 
-    def do_update(self, arg):
-        """
-        Updates an attribute of an instance of a class in storage.
+    def test_show_no_instance(self):
+        """Test show command with non-existing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("show User 1234")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** no instance found **")
 
-        Usage: update <class name> <id> <attribute name> "<attribute value>"
-        <class name>.update("<id>", "<attribute name>", "<attribute value>")
-        <class name>.update("<id>", <dictionary representation>)
+    def test_show_no_instance_v2(self):
+        """Test show command with non-existing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("User.show(1234)")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** no instance found **")
 
-        Parameters:
-            arg (str): The name of the class followed by the instance ID,
-            attribute name, and new value separated by spaces.
+    def test_destroy(self):
+        """Test destroy command"""
+        # Create a User instance first
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
 
-        Returns:
-            None
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"destroy User {user_id}")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "")
 
-        Raises:
-            ValueError: If there is an error parsing the argument string.
-            ValueError: If the class name is missing.
-            ValueError: If the instance ID is missing.
-            ValueError: If the attribute name is missing.
-            ValueError: If the value is missing.
-            ValueError: If the class does not exist.
-            ValueError: If no instance is found.
-            ValueError: If the attribute does not exist.
-            ValueError: If the value is of an invalid type.
-        """
-        try:
-            args = shlex.split(arg)
-        except ValueError:
-            print("** value error **")
-            return
+        # Try to show the destroyed instance
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show User {user_id}")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** no instance found **")
 
-        if len(args) == 0:
-            print("** class name missing **")
-            return
+    def test_destroy_v2(self):
+        """Test destroy command"""
+        # Create a User instance first
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
 
-        if len(args) == 1:
-            print("** instance id missing **")
-            return
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"destroy User {user_id}")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "")
 
-        match = re.search(r'\{.*\}', arg)
-        obj_dict = storage.all()
-        obj_id = re.sub(r'[",]', '', args[1])
+        # Try to show the destroyed instance
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"User.show({user_id})")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** no instance found **")
 
-        if match:
-            extracted_dict_str = match.group(0)
-            dict_update = eval(extracted_dict_str)
+    def test_destroy_missing_class(self):
+        """Test destroy command with missing class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("destroy")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class name missing **")
 
-            if args[0] not in self.CLASSES:
-                print("** class doesn't exist **")
-                return
-            elif f"{args[0]}.{obj_id}" not in obj_dict:
-                print("** no instance found **")
-                return
+    def test_destroy_missing_id(self):
+        """Test destroy command with missing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("destroy User")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** instance id missing **")
 
-            class_name = args[0]
-            obj_key = f"{class_name}.{obj_id}"
-            obj = obj_dict[obj_key]
+    def test_destroy_missing_id_v2(self):
+        """Test destroy command with missing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("User.destroy()")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** instance id missing **")
 
-            for attr, value in dict_update.items():
-                if hasattr(obj, attr):
-                    attr_type = type(getattr(obj, attr))
-                    try:
-                        value = attr_type(value)
-                    except ValueError:
-                        print("** invalid value type **")
-                        continue
-                else:
-                    try:
-                        if isinstance(value, str):
-                            value = eval(value)
-                        elif isinstance(value, (int, float, bool)):
-                            pass
-                        elif isinstance(value, (list, dict)):
-                            value = eval(str(value))
-                        else:
-                            print("** invalid value type **")
-                            continue
-                    except (NameError, SyntaxError):
-                        pass
-                setattr(obj, attr, value)
-            obj.updated_at = datetime.now()
-            storage.save()
+    def test_destroy_invalid_class(self):
+        """Test destroy command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("destroy NonExistentClass 1234")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
 
-        else:
-            if args[0] not in self.CLASSES:
-                print("** class doesn't exist **")
-                return
-            elif f"{args[0]}.{obj_id}" not in obj_dict:
-                print("** no instance found **")
-                return
-            elif len(args) == 2:
-                print("** attribute name missing **")
-                return
-            elif len(args) == 3:
-                print("** value missing **")
-                return
+    def test_destroy_invalid_class_v2(self):
+        """Test destroy command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("NonExistentClass.destroy('1234')")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
 
-            class_name = args[0]
-            obj_attr = re.sub(r'[",]', '', args[2])
-            obj_value = re.sub(r'[",]', '', args[3])
+    def test_destroy_no_instance(self):
+        """Test destroy command with non-existing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("destroy User 1234")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** no instance found **")
 
-            obj_key = f"{class_name}.{obj_id}"
-            obj = obj_dict[obj_key]
-            if hasattr(obj, obj_attr):
-                attr_type = type(getattr(obj, obj_attr))
-                try:
-                    obj_value = attr_type(obj_value)
-                except ValueError:
-                    print("** invalid value type **")
-                    return
-            else:
-                try:
-                    if isinstance(obj_value, str):
-                        obj_value = eval(obj_value)
-                    elif isinstance(obj_value, (int, float, bool)):
-                        pass
-                    elif isinstance(obj_value, (list, dict)):
-                        obj_value = eval(str(obj_value))
-                    else:
-                        print("** invalid value type **")
-                except (NameError, SyntaxError):
-                    pass
-            setattr(obj, obj_attr, obj_value)
-        obj.save()
-        storage.save()
+    def test_destroy_no_instance_v2(self):
+        """Test destroy command with non-existing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("User.destroy('1234')")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** no instance found **")
 
-    def do_quit(self, arg):
-        """Quit command to exit the program \n"""
-        return True
+    def test_count(self):
+        """Test count command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id1 = f.getvalue().strip()
 
-    def do_EOF(self, arg):
-        """To exit the program using EOF \n"""
-        print()
-        return True
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id2 = f.getvalue().strip()
 
-    def emptyline(self):
-        """Do nothing on empty input line."""
-        pass
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("count User")
+            output = f.getvalue().strip()
+        count = sum(1 for key in storage.all().keys()
+                    if key.startswith("User" + "."))
+        self.assertEqual(output, str(count))
+
+    def test_count_v2(self):
+        """Test count command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id1 = f.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id2 = f.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("User.count()")
+            output = f.getvalue().strip()
+        count = sum(1 for key in storage.all().keys()
+                    if key.startswith("User" + "."))
+        self.assertEqual(output, str(count))
+
+    def test_count_missing_class(self):
+        """Test count command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("count")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class name missing **")
+
+    def test_count_invalid_class(self):
+        """Test count command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("count NonExistentClass")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
+
+    def test_count_invalid_class_v2(self):
+        """Test count command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("NonExistentClass.count()")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
+
+    def test_update(self):
+        """Test update command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f'update User {user_id} first_name "John"')
+            output = f.getvalue().strip()
+        self.assertEqual(output, "")
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show User {user_id}")
+            output = f.getvalue().strip()
+        self.assertIn("'first_name': 'John'", output)
+
+    def test_update_integer(self):
+        """Test update command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f'update User {user_id} age 7')
+            output = f.getvalue().strip()
+        self.assertEqual(output, "")
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show User {user_id}")
+            output = f.getvalue().strip()
+        self.assertIn("'age': 7", output)
+
+    def test_update_v2(self):
+        """Test update command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd('User.update("{}", "first_name", "John")'
+                                .format(user_id))
+            output = f.getvalue().strip()
+        self.assertEqual(output, "")
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show User {user_id}")
+            output = f.getvalue().strip()
+        self.assertIn("'first_name': 'John'", output)
+
+    def test_update_integer_v2(self):
+        """Test update command"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd('User.update("{}", "age", 30)'
+                                .format(user_id))
+            output = f.getvalue().strip()
+        self.assertEqual(output, "")
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show User {user_id}")
+            output = f.getvalue().strip()
+        self.assertIn("'age': 30", output)
+
+    def test_update_dict(self):
+        """Test update command with a dictionary"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd('User.update("{}", '
+                                '{{"first_name": "John", "age": 30}})'
+                                .format(user_id))
+            output = f.getvalue().strip()
+        self.assertEqual(output, "")
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"show User {user_id}")
+            output = f.getvalue().strip()
+        self.assertIn("'first_name': 'John'", output)
+        self.assertIn("'age': 30", output)
+
+    def test_update_missing_class(self):
+        """Test update command with missing class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("update")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class name missing **")
+
+    def test_update_invalid_class(self):
+        """Test update command with invalid class name"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("update NonExistentClass 1234")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** class doesn't exist **")
+
+    def test_update_missing_id(self):
+        """Test update command with missing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("update User")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** instance id missing **")
+
+    def test_update_no_instance(self):
+        """Test update command with non-existing instance id"""
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("update User 1234")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** no instance found **")
+
+    def test_update_missing_attr_name(self):
+        """Test update command with missing attribute name"""
+        # create a User
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"update User {user_id}")
+            output = f.getvalue().strip()
+        self.assertEqual(output, "** attribute name missing **")
+
+    """This test was intentional made to fail."""
+    def test_update_missing_value(self):
+        """Test update command with missing value"""
+        # create a User
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd("create User")
+            user_id = f.getvalue().strip()
+
+        with patch('sys.stdout', new=StringIO()) as f:
+            self.console.onecmd(f"update User {user_id} first_name")
+            output = f.getvalue().strip()
+        self.assertNotEqual(output, "** value missing **")
 
 
 if __name__ == "__main__":
-    HBNBCommand().cmdloop()
+    unittest.main()
