@@ -135,8 +135,13 @@ class HBNBCommand(cmd.Cmd):
             if len(key_value) > 1:
                 key = key_value[0]
                 value = ''.join(key_value[1:]).strip('"')
-                if key in HBNBCommand.types:
-                    value = HBNBCommand.types[key](value)
+                if value.isdigit():
+                    value = int(value)
+                else:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        value = value.replace('_', ' ')
                 kwargs[key] = value
 
         new_instance = HBNBCommand.classes[model_class](**kwargs)
