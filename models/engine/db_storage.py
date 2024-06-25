@@ -46,8 +46,7 @@ class DBStorage:
                 key = f"{obj.__class__.__name__}.{obj.id}"
                 new_dict[key] = obj
         else:
-            classes = [BaseModel, User, Place, State, City, Amenity, Review]
-            for cls in classes:
+            for cls in all_classes.values():
                 objs = self.__session.query(cls).all()
                 for obj in objs:
                     key = f"{obj.__class__.__name__}.{obj.id}"
