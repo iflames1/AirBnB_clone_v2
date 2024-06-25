@@ -4,6 +4,7 @@ from models.city import City
 from models.user import User
 from models.place import Place
 
+
 class TestPlace(unittest.TestCase):
     """Test the Place class"""
 
@@ -14,7 +15,8 @@ class TestPlace(unittest.TestCase):
         storage.new(cls.user)
         cls.city = City(name="San Francisco", state_id="some_state_id")
         storage.new(cls.city)
-        cls.place = Place(city_id=cls.city.id, user_id=cls.user.id, name="My Place", description="Nice place")
+        cls.place = Place(city_id=cls.city.id, user_id=cls.user.id,
+                          name="My Place", description="Nice place")
         storage.new(cls.place)
         storage.save()
 
@@ -28,7 +30,8 @@ class TestPlace(unittest.TestCase):
 
     def test_place_creation(self):
         """Test place creation"""
-        place = Place(city_id=self.city.id, user_id=self.user.id, name="Another Place")
+        place = Place(city_id=self.city.id, user_id=self.user.id,
+                      name="Another Place")
         storage.new(place)
         storage.save()
         self.assertIn(place, storage.all(Place).values())
@@ -41,6 +44,7 @@ class TestPlace(unittest.TestCase):
         self.assertEqual(self.place.user_id, self.user.id)
         self.assertEqual(self.place.name, "My Place")
         self.assertEqual(self.place.description, "Nice place")
+
 
 if __name__ == '__main__':
     unittest.main()
