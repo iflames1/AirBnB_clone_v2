@@ -2,6 +2,7 @@ import unittest
 from models import storage
 from models.state import State
 from models.city import City
+from models.user import User
 
 
 class TestDBStorage(unittest.TestCase):
@@ -85,6 +86,19 @@ class TestDBStorage(unittest.TestCase):
         storage.delete(new_state)
         storage.save()
         final_count = len(storage.all(State))
+        self.assertEqual(final_count, initial_count)
+
+    def test_user_creation(self):
+        """Test user creation"""
+        initial_count = len(storage.all(User))
+        new_user = User(email="newuser@example.com", password="newpassword")
+        storage.new(new_user)
+        storage.save()
+        new_count = len(storage.all(User))
+        self.assertEqual(new_count, initial_count + 1)
+        storage.delete(new_user)
+        storage.save()
+        final_count = len(storage.all(User))
         self.assertEqual(final_count, initial_count)
 
 
