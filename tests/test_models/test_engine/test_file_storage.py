@@ -43,7 +43,8 @@ class TestFileStorage(unittest.TestCase):
         """Test that delete(obj) deletes obj from storage"""
         self.storage.delete(self.obj)
         all_objects_after_deletion = self.storage.all()
-        self.assertNotIn(f'BaseModel.{self.obj.id}', all_objects_after_deletion)
+        self.assertNotIn(f'BaseModel.{self.obj.id}',
+                         all_objects_after_deletion)
 
     def test_delete_existing_object2(self):
         """Test that delete(obj) deletes obj from storage"""
