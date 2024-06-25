@@ -6,7 +6,9 @@ from models.place import Place
 
 
 class TestPlace(unittest.TestCase):
-    """Test the Place class"""
+    """
+    Test the Place class
+    """
 
     @classmethod
     def setUpClass(cls):
